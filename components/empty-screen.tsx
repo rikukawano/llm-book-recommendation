@@ -22,13 +22,13 @@ export function EmptyScreen({ setInput }: Pick<UseChatHelpers, 'setInput'>) {
     <div className="mx-auto max-w-2xl px-4">
       <div className="rounded-lg border bg-background p-8">
         <h1 className="mb-2 text-lg font-semibold">
-          Hey, I'm Soma 🤙
+          Hey, I&apos;m Soma 🤙
         </h1>
         <p className="mb-2 leading-normal text-muted-foreground">
-        I'm a bookworm just like you! I've read so many books that I've lost count. Let's find your next great read together! Trust me, I've got the inside scoop on all the page-turners!
+        I&apos;m a bookworm just like you! I&apos;ve read so many books that I&apos;ve lost count. Let&apos;s find your next great read together! Trust me, I&apos;ve got the inside scoop on all the page-turners!
         </p>
         <p className="leading-normal text-muted-foreground">
-        You're in the right place to start a conversation or check out these examples:
+        You&apos;re in the right place to start a conversation or check out these examples:
         </p>
         <div className="mt-4 flex flex-col items-start space-y-2">
           {exampleMessages.map((message, index) => (
