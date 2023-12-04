@@ -1,9 +1,9 @@
 import { kv } from '@vercel/kv'
-import { OpenAIStream, StreamingTextResponse } from 'ai'
 import OpenAI from 'openai'
 
 import { auth } from '@/auth'
 import { nanoid } from '@/lib/utils'
+import { OpenAIStream, StreamingTextResponse } from 'ai'
 
 export const runtime = 'edge'
 
@@ -17,9 +17,7 @@ export async function POST(req: Request) {
   const userId = (await auth())?.user.id
 
   if (!userId) {
-    return new Response('Unauthorized', {
-      status: 401
-    })
+    return new Response('Unauthorized', { status: 401 })
   }
 
   if (previewToken) {
@@ -27,14 +25,22 @@ export async function POST(req: Request) {
   }
 
   const res = await openai.chat.completions.create({
-    model: 'gpt-3.5-turbo',
-    messages,
-    temperature: 0.7,
-    stream: true
+    model: 'gpt-4-1106-preview',
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You will output a valid JSON array of books that you recommend to the user based on what they ask for. You must follow this format: {"recommendations":[{"title": "the title of the book", "author": "the author of the book", "reason": "a short reason explaining your recommendation"}]}. Recommend 3 books.'
+      },
+      ...messages
+    ],
+    temperature: 1,
+    stream: true,
+    response_format: { type: 'json_object' }
   })
 
   const stream = OpenAIStream(res, {
-    async onCompletion(completion) {
+    async onCompletion(res) {
       const title = json.messages[0].content.substring(0, 100)
       const id = json.id ?? nanoid()
       const createdAt = Date.now()
@@ -48,7 +54,7 @@ export async function POST(req: Request) {
         messages: [
           ...messages,
           {
-            content: completion,
+            content: res,
             role: 'assistant'
           }
         ]
