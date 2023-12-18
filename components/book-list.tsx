@@ -11,7 +11,6 @@ interface Recommendations {
 }
 
 const BookList = ({ recommendations }: { recommendations: string }) => {
-  console.log('Recommendations JSON:', recommendations)
   let parsedRecommendations: Recommendations
 
   try {

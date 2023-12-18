@@ -1,15 +1,35 @@
-import { kv } from '@vercel/kv'
-import OpenAI from 'openai'
-
 import { auth } from '@/auth'
-import { nanoid } from '@/lib/utils'
-import { OpenAIStream, StreamingTextResponse } from 'ai'
+import { kv } from '@vercel/kv'
+import { StreamingTextResponse, nanoid } from 'ai'
+import { ChatOpenAI } from 'langchain/chat_models/openai'
+import { ChatPromptTemplate, MessagesPlaceholder } from 'langchain/prompts'
+import { StringOutputParser } from 'langchain/schema/output_parser'
+import { RunnableSequence } from 'langchain/schema/runnable'
+import { BufferMemory } from 'langchain/memory'
 
 export const runtime = 'edge'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+const model = new ChatOpenAI({
+  openAIApiKey: process.env.OPENAI_API_KEY,
+  temperature: 0.9,
+  streaming: true
 })
+
+const memory = new BufferMemory({
+  returnMessages: true, // returns messages as chat messages, instead of as strings
+  inputKey: 'input',
+  outputKey: 'output',
+  memoryKey: 'history'
+})
+
+const chatPrompt = ChatPromptTemplate.fromMessages([
+  [
+    'system',
+    'あなたはユーザーのリクエストに沿って本を紹介します。本の内容を簡潔に紹介してから、ユーザーがなぜ読むべきなのか簡潔に述べてください。'
+  ],
+  new MessagesPlaceholder('history'),
+  ['human', '{input}']
+])
 
 export async function POST(req: Request) {
   const json = await req.json()
@@ -21,51 +41,64 @@ export async function POST(req: Request) {
   }
 
   if (previewToken) {
-    openai.apiKey = previewToken
+    model.openAIApiKey = previewToken
   }
 
-  const res = await openai.chat.completions.create({
-    model: 'gpt-4-1106-preview',
-    messages: [
+  const outputParser = new StringOutputParser()
+
+  const chain = RunnableSequence.from([
+    {
+      input: initialInput => initialInput.input,
+      memory: () => memory.loadMemoryVariables({})
+    },
+    {
+      input: previousOutput => previousOutput.input,
+      history: previousOutput => previousOutput.memory.history
+    },
+    chatPrompt,
+    model,
+    outputParser
+  ])
+
+  const input = {
+    input: messages[messages.length - 1].content
+  }
+
+  const result = await chain.stream(input, {
+    callbacks: [
       {
-        role: 'system',
-        content:
-          'You will output a valid JSON array of books that you recommend to the user based on what they ask for. You must follow this format: {"recommendations":[{"title": "the title of the book", "author": "the author of the book", "reason": "a short reason explaining your recommendation"}]}. Recommend 3 books.'
-      },
-      ...messages
-    ],
-    temperature: 1,
-    stream: true,
-    response_format: { type: 'json_object' }
-  })
+        async handleLLMEnd(output) {
+          await memory.saveContext(input, {
+            output: output.generations[0][0].text
+          })
 
-  const stream = OpenAIStream(res, {
-    async onCompletion(res) {
-      const title = json.messages[0].content.substring(0, 100)
-      const id = json.id ?? nanoid()
-      const createdAt = Date.now()
-      const path = `/chat/${id}`
-      const payload = {
-        id,
-        title,
-        userId,
-        createdAt,
-        path,
-        messages: [
-          ...messages,
-          {
-            content: res,
-            role: 'assistant'
+          const title = json.messages[0].content.substring(0, 100)
+          const id = json.id ?? nanoid()
+          const createdAt = Date.now()
+          const path = `/chat/${id}`
+          const payload = {
+            id,
+            title,
+            userId,
+            createdAt,
+            path,
+            messages: [
+              ...messages,
+              {
+                content: output.generations[0][0].text,
+                role: 'assistant'
+              }
+            ]
           }
-        ]
+          await kv.hmset(`chat:${id}`, payload)
+          await kv.zadd(`user:chat:${userId}`, {
+            score: createdAt,
+            member: `chat:${id}`
+          })
+        }
       }
-      await kv.hmset(`chat:${id}`, payload)
-      await kv.zadd(`user:chat:${userId}`, {
-        score: createdAt,
-        member: `chat:${id}`
-      })
-    }
+    ]
   })
 
-  return new StreamingTextResponse(stream)
+  return new StreamingTextResponse(result)
 }
