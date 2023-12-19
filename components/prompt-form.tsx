@@ -62,10 +62,10 @@ export function PromptForm({
               )}
             >
               <IconPlus />
-              <span className="sr-only">New Chat</span>
+              <span className="sr-only">新規検索</span>
             </button>
           </TooltipTrigger>
-          <TooltipContent>New Chat</TooltipContent>
+          <TooltipContent>新規検索</TooltipContent>
         </Tooltip>
         <Textarea
           ref={inputRef}
@@ -74,7 +74,7 @@ export function PromptForm({
           rows={1}
           value={input}
           onChange={e => setInput(e.target.value)}
-          placeholder="Send a message."
+          placeholder="どのような本を読まれたいですか？"
           spellCheck={false}
           className="min-h-[60px] w-full resize-none bg-transparent px-4 py-[1.3rem] focus-within:outline-none sm:text-sm"
         />
@@ -87,10 +87,10 @@ export function PromptForm({
                 disabled={isLoading || input === ''}
               >
                 <IconArrowElbow />
-                <span className="sr-only">Send message</span>
+                <span className="sr-only">送信</span>
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Send message</TooltipContent>
+            <TooltipContent>送信</TooltipContent>
           </Tooltip>
         </div>
       </div>

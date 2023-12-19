@@ -52,7 +52,7 @@ export function ChatPanel({
                 className="bg-background"
               >
                 <IconRefresh className="mr-2" />
-                Regenerate response
+                回答を更新
               </Button>
             )
           )}
