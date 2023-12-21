@@ -4,16 +4,16 @@ import { IconArrowRight } from '@/components/ui/icons'
 
 const exampleMessages = [
   {
-    heading: 'Explain technical concepts',
-    message: `What is a "serverless function"?`
+    heading: '1984のようなSF小説',
+    message: `1984のようなSF小説`
   },
   {
-    heading: 'Summarize an article',
-    message: 'Summarize the following article for a 2nd grader: \n'
+    heading: '心がほっこりする現代ロマンス',
+    message: '心がほっこりする現代ロマンス'
   },
   {
-    heading: 'Draft an email',
-    message: `Draft an email to my boss about the following: \n`
+    heading: '太宰治の作品のようなバッドエンドがある小説',
+    message: `太宰治の作品のようなバッドエンドがある小説`
   }
 ]
 
@@ -22,13 +22,13 @@ export function EmptyScreen({ setInput }: Pick<UseChatHelpers, 'setInput'>) {
     <div className="mx-auto max-w-2xl px-4">
       <div className="rounded-lg border bg-background p-8">
         <h1 className="mb-2 text-lg font-semibold">
-          Hey, I&apos;m Soma 🤙
+          こんにちは👋 わたしは本を紹介するAIです！
         </h1>
         <p className="mb-2 leading-normal text-muted-foreground">
-        I&apos;m a bookworm just like you! I&apos;ve read so many books that I&apos;ve lost count. Let&apos;s find your next great read together! Trust me, I&apos;ve got the inside scoop on all the page-turners!
+          一緒に次の素晴らしい本を見つけましょう！信じてください、ページをめくるのが止まらないような本のことならお任せください！
         </p>
         <p className="leading-normal text-muted-foreground">
-        You&apos;re in the right place to start a conversation or check out these examples:
+          これらの例から探し始めてもいいですよ👇
         </p>
         <div className="mt-4 flex flex-col items-start space-y-2">
           {exampleMessages.map((message, index) => (

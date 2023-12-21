@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { toast } from 'react-hot-toast'
@@ -37,26 +37,59 @@ export function Chat({ id, initialMessages, className }: ChatProps) {
   )
   const [previewTokenDialog, setPreviewTokenDialog] = useState(IS_PREVIEW)
   const [previewTokenInput, setPreviewTokenInput] = useState(previewToken ?? '')
-  const { messages, append, reload, stop, isLoading, input, setInput } =
-    useChat({
-      initialMessages,
+  const [searchPrompt, setSearchPrompt] = useState('')
+  const {
+    messages,
+    append,
+    reload,
+    stop,
+    isLoading,
+    input,
+    setInput,
+    setMessages
+  } = useChat({
+    initialMessages,
+    id,
+    body: {
       id,
-      body: {
-        id,
-        previewToken
-      },
-      onResponse(response) {
-        if (response.status === 401) {
-          toast.error(response.statusText)
-        }
-      },
-      onFinish() {
-        if (!path.includes('chat')) {
-          router.push(`/chat/${id}`, { shallow: true })
-          router.refresh()
+      previewToken
+    },
+    onResponse(response) {
+      if (response.status === 401) {
+        toast.error(response.statusText)
+      }
+    },
+    async onFinish(message) {
+      if (!path.includes('chat')) {
+        router.push(`/chat/${id}`, { shallow: true })
+        router.refresh()
+      }
+      setSearchPrompt(message.content)
+    }
+  })
+
+  useEffect(() => {
+    async function fetchBookMessage(searchPrompt: string) {
+      if (searchPrompt !== '') {
+        try {
+          const response = await fetch('/api/book', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(searchPrompt)
+          })
+          const newMessage = await response.json()
+          setMessages([...messages, newMessage])
+        } catch (error) {
+          console.error('Error appending chat message:', error)
         }
       }
-    })
+    }
+
+    fetchBookMessage(searchPrompt)
+  }, [searchPrompt])
+
   return (
     <>
       <div className={cn('pb-[200px] pt-4 md:pt-10', className)}>
