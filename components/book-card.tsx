@@ -1,25 +1,38 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 
-import type { Book } from '@/components/book-list';
+interface BookCardProps {
+  title: string,
+  author: string,
+  image: string,
+  url: string
+}
 
-const BookCard = ({ title, author, reason }: Book) => {
+export default function BookCard({ title, author, image, url }: BookCardProps) {
   return (
-    <Card className="w-full max-w-xs bg-white shadow-md hover:shadow-lg transition-shadow duration-300 rounded p-4 m-2">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{author}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <CardDescription>{reason}</CardDescription>
-      </CardContent>
+    <Card className="flex flex-col lg:flex-row gap-6 max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <div className="flex-shrink-0">
+        <img
+          alt={title}
+          className="object-cover w-full h-60"
+          src={image}
+          style={{
+            objectFit: "cover",
+          }}
+        />
+      </div>
+      <div className="flex flex-col justify-between h-full">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-700">{title}</h2>
+          <p className="text-lg text-gray-600">{author}</p>
+        </div>
+        <div>
+          <Button className="mt-4" variant="outline">
+            <Link href={url}>詳しく見る</Link>
+          </Button>
+        </div>
+      </div>
     </Card>
   )
 }
-
-export default BookCard
