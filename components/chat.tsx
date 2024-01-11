@@ -61,7 +61,7 @@ export function Chat({ id, initialMessages, className }: ChatProps) {
     },
     async onFinish(message) {
       if (!path.includes('chat')) {
-        router.push(`/chat/${id}`, { shallow: true })
+        router.push(`/chat/${id}`)
         router.refresh()
       }
       setSearchPrompt(message.content)

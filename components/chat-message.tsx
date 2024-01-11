@@ -1,7 +1,7 @@
 import { Message } from 'ai'
 
 import { cn } from '@/lib/utils'
-import { IconOpenAI, IconSomaAI, IconUser } from '@/components/ui/icons'
+import { IconSomaAI, IconUser } from '@/components/ui/icons'
 import { MemoizedReactMarkdown } from './markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -12,10 +12,20 @@ export interface ChatMessageProps {
   message: Message
 }
 
-export function ChatMessage({ message, ...props }: ChatMessageProps) {
-  const isObject = typeof message.content == 'object'
+interface ContentObject {
+  title: string;
+  author: string;
+  largeImageUrl: string;
+  itemUrl: string;
+}
 
-  const messageBody = isObject ? (
+function isContentObject(content: string | ContentObject): content is ContentObject {
+  return typeof content !== 'string';
+}
+
+export function ChatMessage({ message, ...props }: ChatMessageProps) {
+
+  const messageBody = isContentObject(message.content) ? (
     <BookCard
       title={message.content.title}
       author={message.content.author}
