@@ -80,7 +80,9 @@ export function Chat({ id, initialMessages, className }: ChatProps) {
             body: JSON.stringify(searchPrompt)
           })
           const newMessage = await response.json()
-          setMessages([...messages, newMessage])
+          if(Object.keys(newMessage).length !== 0){
+            setMessages([...messages, newMessage])
+          }
         } catch (error) {
           console.error('Error appending chat message:', error)
         }

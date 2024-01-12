@@ -24,7 +24,7 @@ function isContentObject(content: string | ContentObject): content is ContentObj
 }
 
 export function ChatMessage({ message, ...props }: ChatMessageProps) {
-
+  
   const messageBody = isContentObject(message.content) ? (
     <BookCard
       title={message.content.title}
