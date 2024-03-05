@@ -2,7 +2,10 @@ import { auth } from '@/auth'
 import { kv } from '@vercel/kv'
 import { StreamingTextResponse, nanoid } from 'ai'
 import { ChatOpenAI } from '@langchain/openai'
-import { ChatPromptTemplate, MessagesPlaceholder } from '@langchain/core/prompts'
+import {
+  ChatPromptTemplate,
+  MessagesPlaceholder
+} from '@langchain/core/prompts'
 import { StringOutputParser } from '@langchain/core/output_parsers'
 import { RunnableSequence } from '@langchain/core/runnables'
 import { BufferMemory } from 'langchain/memory'
@@ -32,74 +35,79 @@ const chatPrompt = ChatPromptTemplate.fromMessages([
 ])
 
 export async function POST(req: Request) {
-  const json = await req.json()
-  const { messages, previewToken } = json
-  const userId = (await auth())?.user.id
+  try {
+    const json = await req.json()
+    const { messages, previewToken } = json
+    const userId = (await auth())?.user.id
 
-  if (!userId) {
-    return new Response('Unauthorized', { status: 401 })
-  }
+    if (!userId) {
+      return new Response('Unauthorized', { status: 401 })
+    }
 
-  if (previewToken) {
-    model.openAIApiKey = previewToken
-  }
+    if (previewToken) {
+      model.openAIApiKey = previewToken
+    }
 
-  const outputParser = new StringOutputParser()
+    const outputParser = new StringOutputParser()
 
-  const chain = RunnableSequence.from([
-    {
-      input: initialInput => initialInput.input,
-      memory: () => memory.loadMemoryVariables({})
-    },
-    {
-      input: previousOutput => previousOutput.input,
-      history: previousOutput => previousOutput.memory.history
-    },
-    chatPrompt,
-    model,
-    outputParser
-  ])
-
-  const input = {
-    input: messages[messages.length - 1].content
-  }
-
-  const result = await chain.stream(input, {
-    callbacks: [
+    const chain = RunnableSequence.from([
       {
-        async handleLLMEnd(output) {
-          // Save latest message to memory
-          await memory.saveContext(input, {
-            output: output.generations[0][0].text
-          })
+        input: initialInput => initialInput.input,
+        memory: () => memory.loadMemoryVariables({})
+      },
+      {
+        input: previousOutput => previousOutput.input,
+        history: previousOutput => previousOutput.memory.history
+      },
+      chatPrompt,
+      model,
+      outputParser
+    ])
 
-          const title = json.messages[0].content.substring(0, 100)
-          const id = json.id ?? nanoid()
-          const createdAt = Date.now()
-          const path = `/chat/${id}`
-          const payload = {
-            id,
-            title,
-            userId,
-            createdAt,
-            path,
-            messages: [
-              ...messages,
-              {
-                content: output.generations[0][0].text,
-                role: 'assistant'
-              }
-            ]
+    const input = {
+      input: messages[messages.length - 1].content
+    }
+
+    const result = await chain.stream(input, {
+      callbacks: [
+        {
+          async handleLLMEnd(output) {
+            // Save latest message to memory
+            await memory.saveContext(input, {
+              output: output.generations[0][0].text
+            })
+
+            const title = json.messages[0].content.substring(0, 100)
+            const id = json.id ?? nanoid()
+            const createdAt = Date.now()
+            const path = `/chat/${id}`
+            const payload = {
+              id,
+              title,
+              userId,
+              createdAt,
+              path,
+              messages: [
+                ...messages,
+                {
+                  content: output.generations[0][0].text,
+                  role: 'assistant'
+                }
+              ]
+            }
+            await kv.hmset(`chat:${id}`, payload)
+            await kv.zadd(`user:chat:${userId}`, {
+              score: createdAt,
+              member: `chat:${id}`
+            })
           }
-          await kv.hmset(`chat:${id}`, payload)
-          await kv.zadd(`user:chat:${userId}`, {
-            score: createdAt,
-            member: `chat:${id}`
-          })
         }
-      }
-    ]
-  })
+      ]
+    })
 
-  return new StreamingTextResponse(result)
+    return new StreamingTextResponse(result)
+  } catch (error) {
+    console.error('Error in POST function:', error)
+    return new Response('Internal Server Error', { status: 500 })
+  }
 }

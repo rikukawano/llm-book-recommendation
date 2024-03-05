@@ -65,6 +65,9 @@ export function Chat({ id, initialMessages, className }: ChatProps) {
         router.refresh()
       }
       setSearchPrompt(message.content)
+    },
+    onError(error) {
+      console.error(error)
     }
   })
 
@@ -80,7 +83,7 @@ export function Chat({ id, initialMessages, className }: ChatProps) {
             body: JSON.stringify(searchPrompt)
           })
           const newMessage = await response.json()
-          if(Object.keys(newMessage).length !== 0){
+          if (Object.keys(newMessage).length !== 0) {
             setMessages([...messages, newMessage])
           }
         } catch (error) {
