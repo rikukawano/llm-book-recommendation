@@ -1,4 +1,4 @@
-# Soma - AI Bookworm Chatbot 📚
+# Soma - Book Recommendation Chatbot 📚
 
 Soma is an AI-powered chatbot that specializes in recommending Japanese books. It leverages Langchain to chain together two Large Language Models (LLMs); one for generating book suggestions and another for fetching the suggested book details from the Rakuten API.
 
